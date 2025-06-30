@@ -350,7 +350,7 @@ class ModernChatInterface {
     // Build URL with parameters - using 'query' instead of 'question'
     const params = new URLSearchParams({
       query: query,  // Changed from 'question' to 'query'
-      generate_mode: 'list',
+      generate_mode: 'summarize',
       display_mode: 'full',
       site: this.selectedSite || 'all'
     });
