@@ -17,7 +17,7 @@ endpoints:
     db_type: azure_ai_search
 
   azure_ai_search:
-    enabled: false
+    enabled: true
     api_key_env: AZURE_VECTOR_SEARCH_API_KEY
     api_endpoint_env: AZURE_VECTOR_SEARCH_ENDPOINT
     index_name: embeddings1536
@@ -43,7 +43,7 @@ endpoints:
   qdrant_local:
     enabled: true
     # Use local file-based storage with a specific path
-    database_path: "../data/db"
+    database_path: "/app/data/db"
     # Set the collection name to use
     index_name: nlweb_collection
     # Specify the database type
