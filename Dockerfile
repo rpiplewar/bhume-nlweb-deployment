@@ -34,7 +34,17 @@ RUN groupadd -r nlweb && \
     chown -R nlweb:nlweb /app
 
 # Create data directory for Cloud Run
-RUN mkdir -p /app/data && chown -R nlweb:nlweb /app/data
+RUN mkdir -p /app/data && \
+    mkdir -p /app/logs && \
+    chown -R nlweb:nlweb /app/data && \
+    chown -R nlweb:nlweb /app/logs
+
+# Copy installed packages from builder stage
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Update PATH to include local bin directory
+ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
 USER nlweb
 
@@ -42,16 +52,13 @@ USER nlweb
 COPY code/ /app/
 COPY static/ /app/static/
 
-# Copy installed packages from builder stage
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
 # Expose the port (Cloud Run uses PORT env var)
 EXPOSE 8080
 
 # Set environment variables
 ENV NLWEB_OUTPUT_DIR=/app
 ENV PYTHONPATH=/app
+ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
 # Command to run the application
 CMD exec python app-file.py
