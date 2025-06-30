@@ -1,4 +1,4 @@
-write_endpoint: milvus
+write_endpoint: qdrant_local
 
 endpoints:
 
@@ -33,16 +33,16 @@ endpoints:
 
   # Milvus Lite - local file-based vector database
   milvus:
-    enabled: true
+    enabled: false
     # Local file path for Milvus Lite
     api_endpoint_env: MILVUS_ENDPOINT
     api_key_env: MILVUS_TOKEN
     index_name: nlweb_collection
     db_type: milvus
 
-  # Option 1: Local file-based Qdrant storage (backup option)
+  # Option 1: Local file-based Qdrant storage (PRIMARY)
   qdrant_local:
-    enabled: false
+    enabled: true
     # Use local file-based storage with a specific path
     database_path: "/app/data/db"
     # Set the collection name to use
