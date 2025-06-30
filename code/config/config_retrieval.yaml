@@ -1,4 +1,4 @@
-write_endpoint: qdrant_local
+write_endpoint: milvus
 
 endpoints:
 
@@ -17,7 +17,7 @@ endpoints:
     db_type: azure_ai_search
 
   azure_ai_search:
-    enabled: true
+    enabled: false
     api_key_env: AZURE_VECTOR_SEARCH_API_KEY
     api_endpoint_env: AZURE_VECTOR_SEARCH_ENDPOINT
     index_name: embeddings1536
@@ -31,31 +31,20 @@ endpoints:
     db_type: azure_ai_search
     name: NLWeb_Crawl_Backup
 
-  # Milvus is still under development and not yet supported. 
+  # Milvus Lite - local file-based vector database
   milvus:
-    enabled: false
+    enabled: true
+    # Local file path for Milvus Lite
     api_endpoint_env: MILVUS_ENDPOINT
     api_key_env: MILVUS_TOKEN
     index_name: nlweb_collection
     db_type: milvus
 
-  # Option 1: Local file-based Qdrant storage
+  # Option 1: Local file-based Qdrant storage (backup option)
   qdrant_local:
-    enabled: true
+    enabled: false
     # Use local file-based storage with a specific path
     database_path: "/app/data/db"
-    # Set the collection name to use
-    index_name: nlweb_collection
-    # Specify the database type
-    db_type: qdrant
-    
-  # Option 2: Remote Qdrant server
-  qdrant_url:
-    enabled: false
-    # Connect to a Qdrant server at a specific URL
-    api_endpoint_env: QDRANT_URL
-    # Optional API key for authentication
-    api_key_env: QDRANT_API_KEY
     # Set the collection name to use
     index_name: nlweb_collection
     # Specify the database type
