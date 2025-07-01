@@ -46,19 +46,31 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Update PATH to include local bin directory
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
-USER nlweb
-
 # Copy application code
 COPY code/ /app/
 COPY static/ /app/static/
 
-# Expose the port (Cloud Run uses PORT env var)
-EXPOSE 8080
+# Copy data directory with bhume.txt
+COPY data/ /app/data/
 
-# Set environment variables
+# Copy build script for data loading
+COPY build_load_data.sh /app/build_load_data.sh
+
+# Set environment variables for build process
 ENV NLWEB_OUTPUT_DIR=/app
 ENV PYTHONPATH=/app
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
-# Command to run the application
-CMD exec python app-file.py
+# Run data loading during build (as root before switching to nlweb user)
+RUN chmod +x /app/build_load_data.sh && \
+    /app/build_load_data.sh && \
+    chown -R nlweb:nlweb /app/data
+
+# Switch to non-root user
+USER nlweb
+
+# Expose the port (Cloud Run uses PORT env var)
+EXPOSE 8080
+
+# Command to run the application (data already loaded during build)
+CMD ["./startup.sh"]
