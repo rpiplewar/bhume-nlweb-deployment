@@ -1,4 +1,4 @@
-# Stage 1: Build stage
+# Multi-stage build for optimization
 FROM python:3.13-slim AS builder
 
 # Install build dependencies
@@ -10,67 +10,58 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy requirements file
+# Copy requirements first for better caching
 COPY code/requirements.txt .
-
-# Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Runtime stage
+# Production stage
 FROM python:3.13-slim
 
-# Apply security updates
-RUN apt-get update && \
+# Install security updates only
+RUN apt-get update &&\
    apt-get install -y --no-install-recommends --only-upgrade \
-       $(apt-get --just-print upgrade | grep "^Inst" | grep -i securi | awk '{print $2}') && \
-   apt-get clean && \
+       $(apt-get --just-print upgrade | grep "^Inst" | grep -i securi | awk '{print $2}') &&\
+   apt-get clean &&\
    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Create a non-root user and set permissions
+# Create non-root user
 RUN groupadd -r nlweb && \
     useradd -r -g nlweb -d /app -s /bin/bash nlweb && \
     chown -R nlweb:nlweb /app
 
-# Create data directory for Cloud Run
+# Create directories
 RUN mkdir -p /app/data && \
     mkdir -p /app/logs && \
     chown -R nlweb:nlweb /app/data && \
     chown -R nlweb:nlweb /app/logs
 
-# Copy installed packages from builder stage
+# Copy Python dependencies from builder stage
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Update PATH to include local bin directory
+# Set PATH to include local bin
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
 # Copy application code
 COPY code/ /app/
 COPY static/ /app/static/
-
-# Copy data directory with bhume.txt
 COPY data/ /app/data/
 
-# Copy build script for data loading
-COPY build_load_data.sh /app/build_load_data.sh
-
-# Set environment variables for build process
+# Set environment variables
 ENV NLWEB_OUTPUT_DIR=/app
 ENV PYTHONPATH=/app
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
-# Run data loading during build (as root before switching to nlweb user)
-RUN chmod +x /app/build_load_data.sh && \
-    /app/build_load_data.sh && \
-    chown -R nlweb:nlweb /app/data
+# Fix permissions
+RUN chown -R nlweb:nlweb /app
 
 # Switch to non-root user
 USER nlweb
 
-# Expose the port (Cloud Run uses PORT env var)
+# Expose port
 EXPOSE 8080
 
-# Command to run the application (data already loaded during build)
+# Use startup.sh for runtime data loading
 CMD ["./startup.sh"]
