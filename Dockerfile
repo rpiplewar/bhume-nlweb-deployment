@@ -48,14 +48,16 @@ ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 COPY code/ /app/
 COPY static/ /app/static/
 COPY data/ /app/data/
+COPY startup.sh /app/
 
 # Set environment variables
 ENV NLWEB_OUTPUT_DIR=/app
 ENV PYTHONPATH=/app
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
-# Fix permissions
-RUN chown -R nlweb:nlweb /app
+# Fix permissions and make startup.sh executable
+RUN chown -R nlweb:nlweb /app && \
+    chmod +x /app/startup.sh
 
 # Switch to non-root user
 USER nlweb
