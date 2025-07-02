@@ -612,3 +612,55 @@ async def handle_get_sites_function(send_response, send_chunk):
         logger.error(f"Error in handle_get_sites_function: {str(e)}")
         print(f"Error in handle_get_sites_function: {str(e)}")
         raise
+
+async def handle_mcp_server_info(send_response, send_chunk):
+    """Handle server info requests (typically GET requests to /mcp)"""
+    try:
+        # Get available sites for resources
+        allowed_sites = CONFIG.get_allowed_sites()
+        
+        server_info = {
+            "server": "nlweb-mcp-server",
+            "version": "1.0.0", 
+            "description": "MCP server for NLWeb - Natural Language search across multiple sites",
+            "usage": "This endpoint implements the Model Context Protocol (MCP). Use POST with function_call JSON requests.",
+            "documentation": "Visit /docs for API documentation and /static/index.html for the web interface",
+            "note": "Supports both streaming and non-streaming responses. Use ?streaming=true for SSE streaming.",
+            "resources": {
+                "type": "search_results",
+                "description": f"Search results from {len(allowed_sites)} sites including recipes, movies, papers, and more",
+                "sites": allowed_sites
+            },
+            "tools": {
+                "ask_nlw": "Search and get answers from NLWeb knowledge base",
+                "list_tools": "List all available tools",
+                "list_prompts": "List available prompts",
+                "get_prompt": "Get a specific prompt by ID", 
+                "get_sites": "Get list of available sites"
+            },
+            "example": {
+                "function_call": {
+                    "name": "ask_nlw",
+                    "arguments": json.dumps({
+                        "query": "What are the best pasta recipes?",
+                        "site": "seriouseats",
+                        "streaming": False
+                    })
+                }
+            },
+            "health": {
+                "endpoint": "/mcp/health",
+                "description": "Health check endpoint"
+            }
+        }
+        
+        await send_response(200, {'Content-Type': 'application/json'})
+        await send_chunk(json.dumps(server_info, indent=2), end_response=True)
+        
+    except Exception as e:
+        logger.error(f"Error in handle_mcp_server_info: {str(e)}")
+        print(f"Error in handle_mcp_server_info: {str(e)}")
+        await send_response(500, {'Content-Type': 'application/json'})
+        await send_chunk(json.dumps({
+            "error": f"Internal server error: {str(e)}"
+        }), end_response=True)

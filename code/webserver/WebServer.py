@@ -16,7 +16,7 @@ import time
 import traceback
 import urllib.parse
 from core.whoHandler import WhoHandler
-from core.mcp_handler import handle_mcp_request
+from core.mcp_handler import handle_mcp_request, handle_mcp_server_info
 from utils.utils import get_param
 from webserver.StreamingWrapper import HandleRequest, SendChunkWrapper
 from core.generate_answer import GenerateAnswer
@@ -427,16 +427,43 @@ async def fulfill_request(method, path, headers, query_params, body, send_respon
                 await send_chunk(json.dumps({"status": "ok"}), end_response=True)
                 return
 
-            # Check if streaming should be used from query parameters
-            use_streaming = False
-            if ("streaming" in query_params):
-                strval = get_param(query_params, "streaming", str, "False")
-                use_streaming = strval not in ["False", "false", "0"]
-                
-            # Handle MCP requests with streaming parameter
-            logger.info(f"Routing to MCP handler (streaming={use_streaming})")
-            await handle_mcp_request(query_params, body, send_response, send_chunk, streaming=use_streaming)
-            return
+            # Handle different HTTP methods for /mcp endpoint
+            if path == "/mcp":
+                if method == "GET":
+                    # Return server information
+                    await handle_mcp_server_info(send_response, send_chunk)
+                    return
+                elif method == "POST":
+                    # Handle function calls
+                    use_streaming = False
+                    if ("streaming" in query_params):
+                        strval = get_param(query_params, "streaming", str, "False")
+                        use_streaming = strval not in ["False", "false", "0"]
+                        
+                    logger.info(f"Routing to MCP handler (streaming={use_streaming})")
+                    await handle_mcp_request(query_params, body, send_response, send_chunk, streaming=use_streaming)
+                    return
+                else:
+                    # Method not allowed
+                    await send_response(405, {'Content-Type': 'application/json'})
+                    await send_chunk(json.dumps({
+                        "error": "Method not allowed",
+                        "allowed_methods": ["GET", "POST"],
+                        "message": "Use GET to get server information, POST to execute function calls"
+                    }), end_response=True)
+                    return
+            else:
+                # Handle other MCP-related paths (like health checks above)
+                # Check if streaming should be used from query parameters
+                use_streaming = False
+                if ("streaming" in query_params):
+                    strval = get_param(query_params, "streaming", str, "False")
+                    use_streaming = strval not in ["False", "false", "0"]
+                    
+                # Handle MCP requests with streaming parameter
+                logger.info(f"Routing to MCP handler (streaming={use_streaming})")
+                await handle_mcp_request(query_params, body, send_response, send_chunk, streaming=use_streaming)
+                return
         elif (path.find("ask") != -1):
             # Handle site parameter validation for ask endpoint
             validated_query_params = handle_site_parameter(query_params)
