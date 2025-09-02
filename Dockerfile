@@ -55,6 +55,19 @@ ENV NLWEB_OUTPUT_DIR=/app
 ENV PYTHONPATH=/app
 ENV PATH="/usr/local/bin:/app/.local/bin:$PATH"
 
+# Load data at build time (requires OPENAI_API_KEY build arg)
+ARG OPENAI_API_KEY
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
+RUN if [ -n "$OPENAI_API_KEY" ]; then \
+        echo "Loading data at build time..." && \
+        mkdir -p /app/data/db && \
+        python -m tools.db_load data/bhume.txt bhume && \
+        python -m tools.db_load data/attendees_all_founders_17may.csv founders_event_attendees && \
+        echo "Build-time data loading complete"; \
+    else \
+        echo "OPENAI_API_KEY not provided, skipping build-time data loading"; \
+    fi
+
 # Fix permissions and make startup.sh executable
 RUN chown -R nlweb:nlweb /app && \
     chmod +x /app/startup.sh
