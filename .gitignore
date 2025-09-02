@@ -444,5 +444,7 @@ nlw2.zip
 /code/data/everydaysouthwest_com
 /data
 
+!data/bhume.txt
+!data/attendees_all_founders_17may.csv
 refactored/code/set_keys.sh
 *.DS_Store
