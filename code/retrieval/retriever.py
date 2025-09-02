@@ -18,6 +18,7 @@ from config.config import CONFIG
 from utils.utils import get_param
 from utils.logging_config_helper import get_configured_logger
 from utils.logger import LogLevel
+from utils.json_utils import merge_json_array
 
 logger = get_configured_logger("retriever")
 

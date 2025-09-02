@@ -38,10 +38,28 @@ else
     set -e
     
     if [ $DATA_LOAD_EXIT_CODE -eq 0 ]; then
-        echo "=== Data Loading Complete ==="
         echo "BhuMe blog data has been loaded into the database"
-        echo "The 'bhume' site should now be available via /sites endpoint"
-        DATA_LOADING_SUCCESS=true
+        
+        # Load Founders Attendees CSV data
+        echo "Loading founders attendees data..."
+        echo "Loading data/attendees_all_founders_17may.csv as site 'founders_event_attendees'"
+        
+        set +e
+        python -m tools.db_load data/attendees_all_founders_17may.csv founders_event_attendees
+        CSV_LOAD_EXIT_CODE=$?
+        set -e
+        
+        if [ $CSV_LOAD_EXIT_CODE -eq 0 ]; then
+            echo "Founders attendees data has been loaded into the database"
+            DATA_LOADING_SUCCESS=true
+        else
+            echo "Founders attendees data loading failed (exit code: $CSV_LOAD_EXIT_CODE)"
+            echo "BhuMe data is still available"
+            DATA_LOADING_SUCCESS=true  # Keep true since bhume loaded successfully
+        fi
+        
+        echo "=== Data Loading Complete ==="
+        echo "The 'bhume' and 'founders_event_attendees' sites should now be available via /sites endpoint"
     else
         echo "=== Data Loading Failed ==="
         echo "Exit code: $DATA_LOAD_EXIT_CODE"

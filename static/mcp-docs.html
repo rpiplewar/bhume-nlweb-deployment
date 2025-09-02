@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLWeb MCP Server Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            background: #ecf0f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+            border-radius: 5px;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            margin-right: 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .get { background-color: #2ecc71; }
+        .post { background-color: #e74c3c; }
+        .options { background-color: #f39c12; }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            background: #ecf0f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .test-section {
+            background: #e8f4fd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background-color: #2ecc71; }
+        .status-error { background-color: #e74c3c; }
+        
+        .tool-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .claude-config {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 NLWeb MCP Server Documentation</h1>
+        
+        <div class="claude-config">
+            <h3>🔗 Quick Claude Desktop Setup</h3>
+            <p>To use this MCP server with Claude Desktop, add this configuration:</p>
+            <pre id="claude-config">{
+  "mcpServers": {
+    "nlweb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sse",
+        "<span id="server-url">http://localhost:8000/mcp/sse</span>"
+      ]
+    }
+  }
+}</pre>
+            <p><small>Replace the URL with your actual server URL if different.</small></p>
+        </div>
+
+        <h2>📋 Available Endpoints</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span><strong>/mcp</strong>
+            <p>Server discovery endpoint. Returns server information, capabilities, and examples.</p>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method post">POST</span><strong>/mcp</strong>
+            <p>Main MCP endpoint. Accepts both JSON-RPC 2.0 and legacy function_call formats.</p>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span><strong>/mcp/sse</strong>
+            <p>Server-Sent Events endpoint for streaming MCP connections.</p>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method post">POST</span><strong>/mcp/sse</strong>
+            <p>SSE-based MCP requests with streaming responses.</p>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span><strong>/mcp/health</strong>
+            <p>Health check endpoint.</p>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span><strong>/mcp/capabilities</strong>
+            <p>Detailed server capabilities information.</p>
+        </div>
+
+        <h2>🛠️ Available Tools</h2>
+        
+        <div class="tool-card">
+            <h3>ask_nlw</h3>
+            <p><strong>Primary search tool.</strong> Search and retrieve information from NLWeb data sources.</p>
+            <p><strong>Parameters:</strong></p>
+            <ul>
+                <li><code>query</code> (required): Natural language search query</li>
+                <li><code>site</code> (optional): Specific site to search, or 'all' for all sites</li>
+                <li><code>prev_query</code> (optional): Previous query for context</li>
+                <li><code>context_url</code> (optional): URL for additional context</li>
+                <li><code>streaming</code> (optional): Enable streaming response</li>
+            </ul>
+        </div>
+        
+        <div class="tool-card">
+            <h3>get_sites</h3>
+            <p>Get list of available sites/data sources that can be searched.</p>
+            <p><strong>Parameters:</strong> None</p>
+        </div>
+
+        <h2>🧪 Test the MCP Server</h2>
+        
+        <div class="test-section">
+            <h3>Server Status</h3>
+            <button onclick="testServerStatus()">Check Server Status</button>
+            <div id="status-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test JSON-RPC 2.0 Request</h3>
+            <textarea id="jsonrpc-request">{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "ask_nlw",
+    "arguments": {
+      "query": "how to make pasta",
+      "site": "all"
+    }
+  },
+  "id": 1
+}</textarea>
+            <button onclick="testJsonRpc()">Send JSON-RPC Request</button>
+            <div id="jsonrpc-result" class="response"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Legacy Format</h3>
+            <textarea id="legacy-request">{
+  "function_call": {
+    "name": "ask_nlw",
+    "arguments": "{\"query\": \"best movies of 2023\", \"site\": \"all\"}"
+  }
+}</textarea>
+            <button onclick="testLegacy()">Send Legacy Request</button>
+            <div id="legacy-result" class="response"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>List Available Tools</h3>
+            <button onclick="listTools()">Get Tools</button>
+            <div id="tools-result" class="response"></div>
+        </div>
+
+        <h2>📖 Protocol Documentation</h2>
+        
+        <h3>JSON-RPC 2.0 Format</h3>
+        <p>Standard MCP requests use JSON-RPC 2.0 format:</p>
+        <pre>{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  "id": 1
+}</pre>
+        
+        <h3>Legacy Function Call Format</h3>
+        <p>For backward compatibility, the legacy format is still supported:</p>
+        <pre>{
+  "function_call": {
+    "name": "tool_name",
+    "arguments": "{\"param\": \"value\"}"
+  }
+}</pre>
+        
+        <h3>Response Format</h3>
+        <p>Successful responses return:</p>
+        <pre>{
+  "jsonrpc": "2.0",
+  "result": { ... },
+  "id": 1
+}</pre>
+        
+        <p>Error responses return:</p>
+        <pre>{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32000,
+    "message": "Error description"
+  },
+  "id": 1
+}</pre>
+
+        <h2>🔍 MCP Inspector</h2>
+        <p>You can also test this server using the official MCP Inspector tool:</p>
+        <pre>npx @modelcontextprotocol/inspector</pre>
+        <p>Then enter your server URL: <code id="inspector-url">http://localhost:8000/mcp</code></p>
+    </div>
+
+    <script>
+        // Set the current server URL
+        const currentUrl = window.location.origin;
+        document.getElementById('server-url').textContent = currentUrl + '/mcp/sse';
+        document.getElementById('inspector-url').textContent = currentUrl + '/mcp';
+        document.getElementById('claude-config').innerHTML = document.getElementById('claude-config').innerHTML.replace('http://localhost:8000', currentUrl);
+
+        async function testServerStatus() {
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/mcp');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div><span class="status-indicator status-ok"></span>Server is running</div>
+                        <div><strong>Server:</strong> ${data.server}</div>
+                        <div><strong>Version:</strong> ${data.version}</div>
+                        <div><strong>Sites:</strong> ${data.sites ? data.sites.length : 0} available</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div><span class="status-indicator status-error"></span>Error: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div><span class="status-indicator status-error"></span>Connection failed: ${error.message}</div>`;
+            }
+        }
+
+        async function testJsonRpc() {
+            const request = document.getElementById('jsonrpc-request').value;
+            const resultDiv = document.getElementById('jsonrpc-result');
+            
+            try {
+                const response = await fetch('/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: request
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testLegacy() {
+            const request = document.getElementById('legacy-request').value;
+            const resultDiv = document.getElementById('legacy-result');
+            
+            try {
+                const response = await fetch('/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: request
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function listTools() {
+            const resultDiv = document.getElementById('tools-result');
+            
+            try {
+                const response = await fetch('/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "jsonrpc": "2.0",
+                        "method": "tools/list",
+                        "params": {},
+                        "id": 1
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.result && data.result.tools) {
+                    let html = '<h4>Available Tools:</h4>';
+                    data.result.tools.forEach(tool => {
+                        html += `
+                            <div class="tool-card">
+                                <h5>${tool.name}</h5>
+                                <p>${tool.description}</p>
+                                <details>
+                                    <summary>Parameters</summary>
+                                    <pre>${JSON.stringify(tool.inputSchema, null, 2)}</pre>
+                                </details>
+                            </div>
+                        `;
+                    });
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-test server status on page load
+        window.addEventListener('load', () => {
+            testServerStatus();
+        });
+    </script>
+</body>
+</html> 
